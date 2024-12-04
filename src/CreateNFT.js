@@ -20,6 +20,22 @@ const CreateNFT = () => {
     if (id) {
       setCollectionId(id);
     }
+
+    // Kết nối với ví Phantom để lấy userReferenceId
+    const connectWallet = async () => {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const response = await window.solana.connect();
+          setUserReferenceId(response.publicKey.toString()); // Lấy publicKey từ ví Phantom
+        } catch (err) {
+          setError('Failed to connect to Phantom Wallet.');
+        }
+      } else {
+        setError('Phantom Wallet is not installed. Please install it first.');
+      }
+    };
+
+    connectWallet();
   }, [search]);
 
   const handleCreateNFT = async (event) => {
@@ -36,7 +52,7 @@ const CreateNFT = () => {
         method: 'POST',
         headers: {
           accept: 'application/json',
-          'x-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiI2ZmNmNWRkZi00NzNiLTQ2MzctYjgwNy1lOWE2MTE4ODc1MzIiLCJzdWIiOiI5NTk5YTc3MC1kOTViLTRkOTEtOTUxYi1hMTY2NzM1NTM5ZDgiLCJpYXQiOjE3MzIxODE5ODN9.9WGScu45usjoL0IoTzxoLz6ShKHbg6-vcPAtjuMbZ1E',
+          'x-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
           'content-type': 'application/json',
         },
         body: JSON.stringify({
@@ -149,12 +165,11 @@ const CreateNFT = () => {
           />
         </div>
         <div>
-          <label>User Reference ID:</label>
+          <label>User Reference ID (from Phantom):</label>
           <input
             type="text"
             value={userReferenceId}
-            onChange={(e) => setUserReferenceId(e.target.value)}
-            required
+            readOnly
             style={{ width: '100%', padding: '8px', margin: '10px 0' }}
           />
         </div>

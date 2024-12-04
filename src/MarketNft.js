@@ -6,28 +6,49 @@ import Footer from './components/Footer';
 const MarketNft = () => {
   const [nfts, setNfts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [referenceId, setReferenceId] = useState(null); // state lưu trữ referenceId
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchNfts = async () => {
-      try {
-        const response = await fetch('https://api.gameshift.dev/nx/items', {
-          method: 'GET',
-          headers: {
-            accept: 'application/json',
-            'x-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiI2ZmNmNWRkZi00NzNiLTQ2MzctYjgwNy1lOWE2MTE4ODc1MzIiLCJzdWIiOiI5NTk5YTc3MC1kOTViLTRkOTEtOTUxYi1hMTY2NzM1NTM5ZDgiLCJpYXQiOjE3MzIxODE5ODN9.9WGScu45usjoL0IoTzxoLz6ShKHbg6-vcPAtjuMbZ1E',
-          },
-        });
-        const data = await response.json();
-        setNfts(data.data.map((item) => item.item));
-      } catch (error) {
-        console.error('Error fetching NFTs:', error);
-      } finally {
-        setLoading(false);
+    // Hàm để lấy referenceId từ ví Phantom
+    const getReferenceId = async () => {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const account = await window.solana.connect(); // Kết nối với ví Phantom
+          setReferenceId(account.publicKey.toString()); // Lấy publicKey làm referenceId
+        } catch (error) {
+          console.error('Không thể kết nối ví Phantom:', error);
+        }
+      } else {
+        console.log('Ví Phantom chưa được cài đặt');
       }
     };
-    fetchNfts();
+
+    getReferenceId();
   }, []);
+
+  useEffect(() => {
+    if (referenceId) {
+      const fetchNfts = async () => {
+        try {
+          const response = await fetch(`https://api.gameshift.dev/nx/users/${referenceId}/items`, {
+            method: 'GET',
+            headers: {
+              accept: 'application/json',
+              'x-api-key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiI2ZmNmNWRkZi00NzNiLTQ2MzctYjgwNy1lOWE2MTE4ODc1MzIiLCJzdWIiOiI5NTk5YTc3MC1kOTViLTRkOTEtOTUxYi1hMTY2NzM1NTM5ZDgiLCJpYXQiOjE3MzIxODE5ODN9.9WGScu45usjoL0IoTzxoLz6ShKHbg6-vcPAtjuMbZ1E',
+            },
+          });
+          const data = await response.json();
+          setNfts(data.data.map((item) => item.item)); // Lấy danh sách NFT từ API
+        } catch (error) {
+          console.error('Lỗi khi lấy dữ liệu NFT:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchNfts();
+    }
+  }, [referenceId]); // Gọi lại khi referenceId thay đổi
 
   const handleSell = (id) => navigate(`/sell-nft/${id}`);
   const handleStopSelling = (id) => navigate(`/stop-selling-nft/${id}`);

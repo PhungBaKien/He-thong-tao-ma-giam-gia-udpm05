@@ -1,5 +1,5 @@
-import React from 'react';
-import { AppBar, Toolbar, Box, TextField, Button, IconButton, Typography } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { AppBar, Toolbar, Box, Button, IconButton, Typography } from '@mui/material';
 import HomeIcon from '../assets/images/Logo-Home.png';
 import PersonIcon from '../assets/images/Logo-user.png';
 import NotificationsIcon from '../assets/images/Logo-ThongBao.png';
@@ -7,6 +7,27 @@ import ShoppingCartIcon from '../assets/images/Logo-GioHang.png';
 import { Link } from 'react-router-dom';
 
 const Header = () => {
+  const [walletAddress, setWalletAddress] = useState("");
+
+  // Hàm tự động kết nối Phantom Wallet
+  const connectPhantomWallet = async () => {
+    if (window.solana && window.solana.isPhantom) {
+      try {
+        const response = await window.solana.connect({ onlyIfTrusted: true });
+        setWalletAddress(response.publicKey.toString());
+      } catch (error) {
+        console.error("Failed to connect Phantom Wallet automatically", error);
+      }
+    } else {
+      console.warn("Phantom Wallet is not installed.");
+    }
+  };
+
+  // Tự động kiểm tra và kết nối khi component render
+  useEffect(() => {
+    connectPhantomWallet();
+  }, []);
+
   return (
     <AppBar position="sticky" color="default" sx={{ boxShadow: 'none', borderBottom: '1px solid #ccc' }}>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -20,19 +41,31 @@ const Header = () => {
           <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
             SellSmart Codes
           </Typography>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <Button
-              variant="contained"
+
+          {walletAddress ? (
+            <Typography
+              variant="body1"
               sx={{
                 ml: 2,
-                backgroundColor: 'black', // Đổi màu nút thành đen
-                color: 'white', // Đảm bảo chữ trong nút là màu trắng
+                fontWeight: 'bold',
+                color: 'green',
+                wordBreak: 'break-word', // Đảm bảo địa chỉ ví hiển thị gọn
               }}
             >
-              Select Wallet
-            </Button>
-          </Link>
-
+              {walletAddress}
+            </Typography>
+          ) : (
+            <Typography
+              variant="body1"
+              sx={{
+                ml: 2,
+                fontWeight: 'bold',
+                color: 'red',
+              }}
+            >
+              Phantom Wallet chưa được kết nối
+            </Typography>
+          )}
         </Box>
 
         {/* Navigation Icons */}
